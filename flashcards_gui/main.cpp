@@ -1,5 +1,5 @@
 // TODO: Add file comment here
-/
+
 // TODO: Lisää ohjelman alkukomentti
 
 #include "mainwindow.hh"

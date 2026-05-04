@@ -9,13 +9,17 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    cardwidget.cpp \
     main.cpp \
+    mainwindow.cpp \
     utils.cpp \
     deckmanager.cpp \
     deck.cpp \
     card.cpp
 
 HEADERS += \
+    cardwidget.hh \
+    mainwindow.hh \
     utils.hh \
     deckmanager.hh \
     deck.hh \
