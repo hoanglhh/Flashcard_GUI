@@ -73,6 +73,27 @@ private slots:
      */
     void onDeckSelected(QListWidgetItem* item);
 
+
+    /**
+     * @brief Removes the card that is currently selected in the card list.
+     */
+    void onRemoveCard();
+
+    /**
+     * @brief Highlights the card that was just selected in the card list
+     *        and loads it into the CardWidget for study / flip.
+     * @param item The list item that was clicked.
+     */
+    void onCardSelected(QListWidgetItem* item);
+
+    /**
+     * @brief Receives a new card submitted by the CardWidget and adds it
+     *        to the currently selected deck.
+     * @param fieldNames  Ordered list of field-type identifiers.
+     * @param definitions Ordered list of definition strings.
+     */
+    void onCardAdded(const Fields& fieldNames, const Fields& definitions);
+
     void onExit();
 
 private:
@@ -82,6 +103,23 @@ private:
      * @brief Refreshes the deck QListWidget from DeckManager.
      */
     void refreshDeckList();
+
+    /**
+     * @brief Populates the card QListWidget for the given deck.
+     * @param deckName Name of the deck whose cards to display.
+     */
+    void refreshCardList(const QString& deckName);
+
+    /**
+     * @brief Returns the name of the currently selected deck, or "" if none.
+     */
+    QString selectedDeckName() const;
+
+    /**
+     * @brief Returns the card ID of the currently selected card list row,
+     *        or 0 if none selected.
+     */
+    unsigned int selectedCardId() const;
 
     /**
      * @brief Shows a transient message in the status bar.
