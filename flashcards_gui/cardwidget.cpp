@@ -24,7 +24,10 @@
 #include "cardwidget.hh"
 #include "card.hh"
 
+#include <QMessageBox>
 #include <QFrame>
+
+// ── Constructor / Destructor ─────────────────────────────────────────────────
 
 CardWidget::CardWidget(QWidget* parent) :
     QWidget(parent),
@@ -36,16 +39,19 @@ CardWidget::CardWidget(QWidget* parent) :
     rowsLayout_(new QVBoxLayout()),
     actionBtn_(new QPushButton(this))
 {
+    // Style the title label
     titleLabel_->setAlignment(Qt::AlignCenter);
     QFont titleFont = titleLabel_->font();
     titleFont.setPointSize(13);
     titleFont.setBold(true);
     titleLabel_->setFont(titleFont);
 
+    // Result label (shown after Study check or Flip reveal)
     resultLabel_->setAlignment(Qt::AlignCenter);
     resultLabel_->setWordWrap(true);
     resultLabel_->hide();
 
+    // Build main layout: title → rows → result → button
     mainLayout_->addWidget(titleLabel_);
     mainLayout_->addLayout(rowsLayout_);
     mainLayout_->addWidget(resultLabel_);
@@ -55,11 +61,14 @@ CardWidget::CardWidget(QWidget* parent) :
     connect(actionBtn_, &QPushButton::clicked,
             this, &CardWidget::onActionButton);
 
+    // Start in a neutral state
     titleLabel_->setText("Select a deck to add a card");
     actionBtn_->setEnabled(false);
 }
 
 CardWidget::~CardWidget() {}
+
+// ── Public setup methods ─────────────────────────────────────────────────────
 
 void CardWidget::setupForAdd(const Fields& fields)
 {
@@ -166,115 +175,119 @@ void CardWidget::setupForStudy(shared_ptr<Card> card, const Fields& fields)
     }
 }
 
+// ── Private slot ─────────────────────────────────────────────────────────────
+
 void CardWidget::onActionButton()
 {
     if ( mode_ == CardMode::AddMode )
+    {
+        // Collect values from all editable fields
+        Fields defs;
+        for ( QLineEdit* edit : fieldEdits_ )
         {
-            // Collect values from all editable fields
-            Fields defs;
-            for ( QLineEdit* edit : fieldEdits_ )
-            {
-                defs.push_back(edit->text().trimmed().toStdString());
-            }
-
-            // Basic validation: no empty fields
-            for ( const string& d : defs )
-            {
-                if ( d.empty() )
-                {
-                    resultLabel_->setText("Please fill in all fields.");
-                    resultLabel_->setStyleSheet("color: red;");
-                    resultLabel_->show();
-                    return;
-                }
-            }
-
-            emit cardSubmitted(fieldNames_, defs);
-
-            // Clear inputs after successful add
-            for ( QLineEdit* edit : fieldEdits_ )
-            {
-                edit->clear();
-            }
-            resultLabel_->setText("Card added!");
-            resultLabel_->setStyleSheet("color: green;");
-            resultLabel_->show();
+            defs.push_back(edit->text().trimmed().toStdString());
         }
-    else if ( mode_ == CardMode::FlipMode )
-        {
-            // Reveal the next hidden row
-            int total = fieldRows_.size();
-            if ( flipRevealIndex_ < total )
-            {
-                fieldRows_.at(flipRevealIndex_)->show();
-                ++flipRevealIndex_;
-            }
 
-            if ( flipRevealIndex_ >= fieldRows_.size() )
-            {
-                actionBtn_->setText("All Revealed");
-                actionBtn_->setEnabled(false);
-            }
-        }
-    else if ( mode_ == CardMode::StudyMode )
+        // Basic validation: no empty fields
+        for ( const string& d : defs )
         {
-            if ( !currentCard_ || fieldNames_.empty() )
+            if ( d.empty() )
             {
+                resultLabel_->setText("Please fill in all fields.");
+                resultLabel_->setStyleSheet("color: red;");
+                resultLabel_->show();
                 return;
             }
-
-            // First field is the prompt; collect answers from the rest
-            Fields answerFields(fieldNames_.begin() + 1, fieldNames_.end());
-            Fields answers;
-            for ( int i = 1 ; i < fieldEdits_.size() ; ++i )
-            {
-                answers.push_back(fieldEdits_.at(i)->text()
-                                      .trimmed()
-                                      .toStdString());
-            }
-
-            double score = currentCard_->check_answers(answerFields, answers);
-            int pct = static_cast<int>(score * 100.0);
-
-            QString msg = QString("Score: %1%").arg(pct);
-            if ( pct == 100 )
-            {
-                msg += "  ✓ Perfect!";
-                resultLabel_->setStyleSheet("color: green; font-weight: bold;");
-            }
-            else if ( pct >= 50 )
-            {
-                resultLabel_->setStyleSheet("color: orange; font-weight: bold;");
-            }
-            else
-            {
-                resultLabel_->setStyleSheet("color: red; font-weight: bold;");
-            }
-
-            // Show correct answers after checking
-            Fields defs;
-            currentCard_->get_definitions(fieldNames_, defs);
-            QString details = "";
-            for ( int i = 1 ; i < static_cast<int>(fieldNames_.size()) ; ++i )
-            {
-                QString field = QString::fromStdString(
-                    fieldNames_.at(static_cast<Fields::size_type>(i)));
-                QString correct = (i < static_cast<int>(defs.size()))
-                                      ? QString::fromStdString(
-                                            defs.at(
-                                                static_cast<Fields::size_type>(i)))
-                                      : "?";
-                details += QString("\n%1: %2").arg(field, correct);
-            }
-
-            resultLabel_->setText(msg + "\nCorrect answers:" + details);
-            resultLabel_->show();
         }
+
+        emit cardSubmitted(fieldNames_, defs);
+
+        // Clear inputs after successful add
+        for ( QLineEdit* edit : fieldEdits_ )
+        {
+            edit->clear();
+        }
+        resultLabel_->setText("Card added!");
+        resultLabel_->setStyleSheet("color: green;");
+        resultLabel_->show();
+    }
+    else if ( mode_ == CardMode::FlipMode )
+    {
+        // Reveal the next hidden row
+        int total = fieldRows_.size();
+        if ( flipRevealIndex_ < total )
+        {
+            fieldRows_.at(flipRevealIndex_)->show();
+            ++flipRevealIndex_;
+        }
+
+        if ( flipRevealIndex_ >= fieldRows_.size() )
+        {
+            actionBtn_->setText("All Revealed");
+            actionBtn_->setEnabled(false);
+        }
+    }
+    else if ( mode_ == CardMode::StudyMode )
+    {
+        if ( !currentCard_ || fieldNames_.empty() )
+        {
+            return;
+        }
+
+        // First field is the prompt; collect answers from the rest
+        Fields answerFields(fieldNames_.begin() + 1, fieldNames_.end());
+        Fields answers;
+        for ( int i = 1 ; i < fieldEdits_.size() ; ++i )
+        {
+            answers.push_back(fieldEdits_.at(i)->text()
+                                  .trimmed()
+                                  .toStdString());
+        }
+
+        double score = currentCard_->check_answers(answerFields, answers);
+        int pct = static_cast<int>(score * 100.0);
+
+        QString msg = QString("Score: %1%").arg(pct);
+        if ( pct == 100 )
+        {
+            msg += "  ✓ Perfect!";
+            resultLabel_->setStyleSheet("color: green; font-weight: bold;");
+        }
+        else if ( pct >= 50 )
+        {
+            resultLabel_->setStyleSheet("color: orange; font-weight: bold;");
+        }
+        else
+        {
+            resultLabel_->setStyleSheet("color: red; font-weight: bold;");
+        }
+
+        // Show correct answers after checking
+        Fields defs;
+        currentCard_->get_definitions(fieldNames_, defs);
+        QString details = "";
+        for ( int i = 1 ; i < static_cast<int>(fieldNames_.size()) ; ++i )
+        {
+            QString field = QString::fromStdString(
+                fieldNames_.at(static_cast<Fields::size_type>(i)));
+            QString correct = (i < static_cast<int>(defs.size()))
+                                  ? QString::fromStdString(
+                                        defs.at(
+                                            static_cast<Fields::size_type>(i)))
+                                  : "?";
+            details += QString("\n%1: %2").arg(field, correct);
+        }
+
+        resultLabel_->setText(msg + "\nCorrect answers:" + details);
+        resultLabel_->show();
     }
 }
 
+// ── Private helpers ──────────────────────────────────────────────────────────
+
 void CardWidget::clearRows()
 {
+    // Delete each row container; Qt cleans up its label and edit children
     for ( QWidget* row : fieldRows_ )
     {
         rowsLayout_->removeWidget(row);
@@ -285,10 +298,13 @@ void CardWidget::clearRows()
     fieldEdits_.clear();
 }
 
-void CardWidget::addRow(const QString& fieldName, bool readOnly)
+void CardWidget::addRow(const QString& fieldName,
+                        bool readOnly)
 {
-    QWidget*     row = new QWidget(this);
-    QHBoxLayout* lay = new QHBoxLayout(row);
+    // Each row is a container widget so clearRows() can delete it safely,
+    // which automatically destroys the child label and edit too.
+    QWidget*    row   = new QWidget(this);
+    QHBoxLayout* lay  = new QHBoxLayout(row);
     lay->setContentsMargins(0, 0, 0, 0);
 
     QLabel*    label = new QLabel(fieldName + ":", row);
@@ -303,6 +319,7 @@ void CardWidget::addRow(const QString& fieldName, bool readOnly)
 
     lay->addWidget(label);
     lay->addWidget(edit);
+
     rowsLayout_->addWidget(row);
 
     fieldRows_.append(row);

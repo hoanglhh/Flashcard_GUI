@@ -6,7 +6,7 @@
 # Description: Declares the DeckManager class interface.                    #
 #                                                                           #
 # Notes: * Manages multiple decks.                                          #
-#        * Provides operations for creating and studying decks.  	    #
+#        * Provides operations for creating and studying decks.             #
 #        * Acts as an abstraction layer between GUI and Deck objects.       #
 #                                                                           #
 # Author information:                                                       #

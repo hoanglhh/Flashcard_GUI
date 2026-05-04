@@ -40,14 +40,31 @@
 #include <QGroupBox>
 #include <QStatusBar>
 
+/**
+ * @brief The MainWindow class is the top-level GUI window for the Flashcard
+ *        application.
+ *
+ * It owns a DeckManager instance and exposes all deck/card operations
+ * through a Qt-based interface.  The window is divided into three columns:
+ *   1. Deck list  – add, select, remove decks and load from file.
+ *   2. Card list  – shows cards belonging to the selected deck; remove card.
+ *   3. Card panel – a CardWidget for adding cards or studying/flipping them.
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
+    /**
+     * @brief Constructs the MainWindow and builds the entire UI.
+     * @param parent Optional Qt parent widget.
+     */
     explicit MainWindow(QWidget* parent = nullptr);
-    ~MainWindow();
 
+    /**
+     * @brief Destructs the MainWindow.
+     */
+    ~MainWindow();
 
 private slots:
     /**
@@ -73,7 +90,6 @@ private slots:
      */
     void onDeckSelected(QListWidgetItem* item);
 
-
     /**
      * @brief Removes the card that is currently selected in the card list.
      */
@@ -94,9 +110,20 @@ private slots:
      */
     void onCardAdded(const Fields& fieldNames, const Fields& definitions);
 
+    /**
+     * @brief Exits the application cleanly (without using exit()).
+     */
     void onExit();
 
 private:
+    // ── Core logic ──────────────────────────────────────────────────────────
+    DeckManager manager_;
+
+    // ── UI helpers ───────────────────────────────────────────────────────────
+    /**
+     * @brief Builds and wires up all child widgets.  Called once from the
+     *        constructor.
+     */
     void buildUi();
 
     /**
@@ -128,19 +155,21 @@ private:
      */
     void showStatus(const QString& msg, bool isError = false);
 
-    DeckManager manager_;
-
+    // ── Deck panel ───────────────────────────────────────────────────────────
     QListWidget*  deckList_;
     QLineEdit*    fileInput_;
     QPushButton*  loadFileBtn_;
     QPushButton*  addDeckBtn_;
     QPushButton*  removeDeckBtn_;
 
+    // ── Card panel ───────────────────────────────────────────────────────────
     QListWidget*  cardList_;
     QPushButton*  removeCardBtn_;
 
+    // ── Card widget ──────────────────────────────────────────────────────────
     CardWidget*   cardWidget_;
 
+    // ── Tracks which card ID each row in cardList_ corresponds to ───────────
     QVector<unsigned int> cardIds_;
 };
 
