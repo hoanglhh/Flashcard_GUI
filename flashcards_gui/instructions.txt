@@ -1,0 +1,80 @@
+Flashcards GUI - Instructions
+====================================
+COMP.CS.115 Programming 3: Interfaces
+
+# Author information:                                                       #
+#   - Name:           Huy Hoang Le                                          #
+#   - Student number: 153144716                                             #
+#   - Gitlab user:    txf523                                                #
+#   - Tuni email:     huyhoang.le@tuni.fi                                   #
+#                                                                           #
+#   - Name:           Phuong Thao Nguyen                                    #
+#   - Student number: 152270131                                             #
+#   - Gitlab user:    dbphng                                                #
+#   - Tuni email:     phuong.4.nguyen@tuni.fi                               #
+
+
+--- HOW TO RUN ---
+Run the compiled binary. A window with three panels appears:
+  Left:   Deck list (with file loading and deck management controls)
+  Middle: Card list for the selected deck
+  Right:  Card widget (for adding, flipping, or studying cards)
+
+--- IMPLEMENTED FEATURES ---
+
+1. VIEW DECKS
+   All loaded decks are listed in the left panel.
+
+2. VIEW CARDS IN A DECK
+   Click a deck in the left panel to see its cards in the middle panel.
+   Each card entry shows its ID and the values of the first two fields.
+
+3. LOAD DECKS FROM FILE
+   Type the file name (e.g. "months.txt") in the text box at the top of
+   the left panel and click "Load File". The file must be located in the
+   working directory (the directory where the binary is run from).
+   The file format is:
+     Line 1: <DeckName>;<NumberOfFields>
+     Line 2: <Field1>;<Field2>;...
+     Line 3+: one card per line, field values separated by semicolons.
+
+4. ADD DECK VIA GUI
+   Click "+ Add Deck". A dialog opens where you enter:
+     - Deck name (e.g. "Finnish Vocabulary")
+     - Field names separated by semicolons (e.g. "EN;FI")
+   The deck is added immediately and appears in the deck list.
+
+5. REMOVE DECK
+   Select a deck in the left panel and click "✕ Remove Deck".
+   A confirmation dialog will appear before the deck is deleted.
+
+6. ADD CARD
+   Select a deck, then click "Add Card" below the card list.
+   The right panel shows an input row for each field in the deck.
+   Fill in all fields and click "Add Card" to save. The card list
+   updates automatically. Leaving any field empty will show an error.
+
+7. REMOVE CARD
+   Select a deck and then a card in the middle panel.
+   Click "✕ Remove Card" to remove it. The card list updates immediately.
+
+8. FLIP CARD
+   Select a deck and a card, then click "Flip Card" below the card list.
+   The right panel shows the first field as a read-only prompt.
+   Press "Flip ▶" to reveal the remaining fields one by one.
+   Once all fields are revealed, the button changes to "All Revealed".
+
+9. STUDY CARD
+   Select a deck and a card, then click "Study Card" below the card list.
+   The right panel shows:
+     - The first field value as a read-only prompt.
+     - The remaining fields as editable input boxes for your answers.
+   Press "Check Answers" to compare your answers against the stored
+   definitions. A score (0-100%) is shown along with the correct answers:
+     Green  = 100% correct
+     Orange = 50% or more correct
+     Red    = less than 50% correct
+
+10. EXIT
+    Click "Exit" in the bottom-right corner of the status bar.
+    The application closes cleanly.
