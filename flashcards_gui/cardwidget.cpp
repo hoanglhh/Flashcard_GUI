@@ -81,6 +81,50 @@ void CardWidget::setupForAdd(const Fields& fields)
     }
 }
 
+void CardWidget::setupForFlip(shared_ptr<Card> card, const Fields& fields)
+{
+    mode_ = CardMode::FlipMode;
+    fieldNames_ = fields;
+    currentCard_ = card;
+    flipRevealIndex_ = 1; // first field already shown
+
+    clearRows();
+    resultLabel_->hide();
+
+    titleLabel_->setText("Flip Card");
+    actionBtn_->setText("Flip ▶");
+    actionBtn_->setEnabled(true);
+
+    // Retrieve all definitions
+    Fields defs;
+    card->get_definitions(fields, defs);
+
+    for ( int i = 0 ; i < static_cast<int>(fields.size()) ; ++i )
+    {
+        QString label = QString::fromStdString(fields.at(
+                            static_cast<Fields::size_type>(i)));
+        addRow(label, true);
+
+        QString value = (i < static_cast<int>(defs.size()))
+                            ? QString::fromStdString(
+                                  defs.at(static_cast<Fields::size_type>(i)))
+                            : "";
+        fieldEdits_.at(i)->setText(value);
+
+        // Hide all fields except the first
+        if ( i > 0 )
+        {
+            fieldRows_.at(i)->hide();
+        }
+    }
+
+    // If only one field exists, nothing to flip
+    if ( fields.size() <= 1 )
+    {
+        actionBtn_->setEnabled(false);
+    }
+}
+
 void CardWidget::onActionButton()
 {
     if ( mode_ == CardMode::AddMode )
@@ -114,6 +158,22 @@ void CardWidget::onActionButton()
             resultLabel_->setText("Card added!");
             resultLabel_->setStyleSheet("color: green;");
             resultLabel_->show();
+        }
+    else if ( mode_ == CardMode::FlipMode )
+        {
+            // Reveal the next hidden row
+            int total = fieldRows_.size();
+            if ( flipRevealIndex_ < total )
+            {
+                fieldRows_.at(flipRevealIndex_)->show();
+                ++flipRevealIndex_;
+            }
+
+            if ( flipRevealIndex_ >= fieldRows_.size() )
+            {
+                actionBtn_->setText("All Revealed");
+                actionBtn_->setEnabled(false);
+            }
         }
 }
 
