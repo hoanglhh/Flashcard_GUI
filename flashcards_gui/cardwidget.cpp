@@ -61,7 +61,61 @@ CardWidget::CardWidget(QWidget* parent) :
 
 CardWidget::~CardWidget() {}
 
-void CardWidget::onActionButton() {}
+void CardWidget::setupForAdd(const Fields& fields)
+{
+    mode_ = CardMode::AddMode;
+    fieldNames_ = fields;
+    currentCard_ = nullptr;
+    flipRevealIndex_ = 0;
+
+    clearRows();
+    resultLabel_->hide();
+
+    titleLabel_->setText("Add New Card");
+    actionBtn_->setText("Add Card");
+    actionBtn_->setEnabled(true);
+
+    for ( const string& f : fields )
+    {
+        addRow(QString::fromStdString(f), false);
+    }
+}
+
+void CardWidget::onActionButton()
+{
+    if ( mode_ == CardMode::AddMode )
+        {
+            // Collect values from all editable fields
+            Fields defs;
+            for ( QLineEdit* edit : fieldEdits_ )
+            {
+                defs.push_back(edit->text().trimmed().toStdString());
+            }
+
+            // Basic validation: no empty fields
+            for ( const string& d : defs )
+            {
+                if ( d.empty() )
+                {
+                    resultLabel_->setText("Please fill in all fields.");
+                    resultLabel_->setStyleSheet("color: red;");
+                    resultLabel_->show();
+                    return;
+                }
+            }
+
+            emit cardSubmitted(fieldNames_, defs);
+
+            // Clear inputs after successful add
+            for ( QLineEdit* edit : fieldEdits_ )
+            {
+                edit->clear();
+            }
+            resultLabel_->setText("Card added!");
+            resultLabel_->setStyleSheet("color: green;");
+            resultLabel_->show();
+        }
+}
 
 void CardWidget::clearRows()
 {

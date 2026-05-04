@@ -50,6 +50,8 @@ public:
     explicit CardWidget(QWidget* parent = nullptr);
     ~CardWidget();
 
+    void setupForAdd(const Fields& fields);
+
 signals:
     void cardSubmitted(const Fields& fieldNames,
                        const Fields& definitions);
