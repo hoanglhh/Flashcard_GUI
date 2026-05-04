@@ -48,11 +48,47 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
+
 private slots:
+    /**
+     * @brief Loads a deck from the file whose name is entered in the
+     *        file-name input field.
+     */
+    void onLoadFile();
+
+    /**
+     * @brief Opens a small dialog to let the user create a new deck
+     *        with a custom name and semicolon-separated field list.
+     */
+    void onAddDeck();
+
+    /**
+     * @brief Removes the deck that is currently selected in the deck list.
+     */
+    void onRemoveDeck();
+
+    /**
+     * @brief Populates the card list for the deck that was just selected.
+     * @param item The list item that was clicked.
+     */
+    void onDeckSelected(QListWidgetItem* item);
+
     void onExit();
 
 private:
     void buildUi();
+
+    /**
+     * @brief Refreshes the deck QListWidget from DeckManager.
+     */
+    void refreshDeckList();
+
+    /**
+     * @brief Shows a transient message in the status bar.
+     * @param msg  Text to display.
+     * @param isError  If true, text is shown in red.
+     */
+    void showStatus(const QString& msg, bool isError = false);
 
     DeckManager manager_;
 

@@ -125,7 +125,154 @@ void MainWindow::buildUi()
             this, &MainWindow::onExit);
 }
 
+void MainWindow::onLoadFile()
+{
+    QString fileName = fileInput_->text().trimmed();
+    if ( fileName.isEmpty() )
+    {
+        showStatus("Enter a file name first.", true);
+        return;
+    }
+
+    bool ok = manager_.read_file(fileName.toStdString());
+    if ( ok )
+    {
+        showStatus("File loaded: " + fileName);
+        refreshDeckList();
+    }
+    else
+    {
+        showStatus("Failed to load file: " + fileName, true);
+    }
+}
+
+void MainWindow::onAddDeck()
+{
+    // Small dialog: deck name + fields
+    QDialog dlg(this);
+    dlg.setWindowTitle("Add Deck");
+
+    QFormLayout* form = new QFormLayout(&dlg);
+
+    QLineEdit* nameEdit   = new QLineEdit();
+    nameEdit->setPlaceholderText("e.g. Finnish Vocabulary");
+
+    QLineEdit* fieldsEdit = new QLineEdit();
+    fieldsEdit->setPlaceholderText("e.g. EN;FI  (semicolon-separated)");
+
+    form->addRow("Deck name:", nameEdit);
+    form->addRow("Fields:",    fieldsEdit);
+
+    QDialogButtonBox* btns = new QDialogButtonBox(
+        QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    form->addRow(btns);
+
+    connect(btns, &QDialogButtonBox::accepted, &dlg, &QDialog::accept);
+    connect(btns, &QDialogButtonBox::rejected, &dlg, &QDialog::reject);
+
+    if ( dlg.exec() != QDialog::Accepted )
+    {
+        return;
+    }
+
+    QString name   = nameEdit->text().trimmed();
+    QString fStr   = fieldsEdit->text().trimmed();
+
+    if ( name.isEmpty() || fStr.isEmpty() )
+    {
+        showStatus("Deck name and at least one field are required.", true);
+        return;
+    }
+
+    // Parse semicolon-separated fields
+    Fields fields;
+    for ( const QString& f : fStr.split(';') )
+    {
+        QString trimmed = f.trimmed();
+        if ( !trimmed.isEmpty() )
+        {
+            fields.push_back(trimmed.toStdString());
+        }
+    }
+
+    auto deck = manager_.add_deck(name.toStdString(), fields);
+    if ( deck )
+    {
+        showStatus("Deck added: " + name);
+        refreshDeckList();
+    }
+    else
+    {
+        showStatus("A deck with that name already exists.", true);
+    }
+}
+
+void MainWindow::onRemoveDeck()
+{
+    QString name = selectedDeckName();
+    if ( name.isEmpty() )
+    {
+        showStatus("Select a deck to remove.", true);
+        return;
+    }
+
+    QMessageBox::StandardButton reply =
+        QMessageBox::question(this, "Remove Deck",
+                              "Remove deck \"" + name + "\"?",
+                              QMessageBox::Yes | QMessageBox::No);
+    if ( reply != QMessageBox::Yes )
+    {
+        return;
+    }
+
+    manager_.remove_deck(name.toStdString());
+    showStatus("Deck removed: " + name);
+    cardList_->clear();
+    cardIds_.clear();
+    refreshDeckList();
+}
+
+void MainWindow::onDeckSelected(QListWidgetItem* item)
+{
+    if ( !item )
+    {
+        return;
+    }
+    QString deckName = item->text();
+    refreshCardList(deckName);
+
+    // Switch card widget to Add mode for the selected deck
+    auto deck = manager_.get_deck(deckName.toStdString());
+    if ( deck )
+    {
+        cardWidget_->setupForAdd(*deck->get_fields());
+    }
+    showStatus("Deck selected: " + deckName);
+}
+
 void MainWindow::onExit()
 {
     close();
+}
+
+void MainWindow::refreshDeckList()
+{
+    deckList_->clear();
+    for ( const string& name : manager_.get_deck_names() )
+    {
+        deckList_->addItem(QString::fromStdString(name));
+    }
+}
+
+void MainWindow::showStatus(const QString& msg, bool isError)
+{
+    if ( isError )
+    {
+        statusBar()->setStyleSheet("color: red;");
+    }
+    else
+    {
+        statusBar()->setStyleSheet("");
+    }
+    statusBar()->showMessage(msg, 4000);
 }
