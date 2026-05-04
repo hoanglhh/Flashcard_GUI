@@ -125,6 +125,47 @@ void CardWidget::setupForFlip(shared_ptr<Card> card, const Fields& fields)
     }
 }
 
+void CardWidget::setupForStudy(shared_ptr<Card> card, const Fields& fields)
+{
+    mode_ = CardMode::StudyMode;
+    fieldNames_ = fields;
+    currentCard_ = card;
+    flipRevealIndex_ = 0;
+
+    clearRows();
+    resultLabel_->hide();
+
+    titleLabel_->setText("Study Card");
+    actionBtn_->setText("Check Answers");
+    actionBtn_->setEnabled(true);
+
+    // Retrieve all definitions for the prompt field
+    Fields defs;
+    card->get_definitions(fields, defs);
+
+    for ( int i = 0 ; i < static_cast<int>(fields.size()) ; ++i )
+    {
+        QString label = QString::fromStdString(
+            fields.at(static_cast<Fields::size_type>(i)));
+
+        if ( i == 0 )
+        {
+            // Show first field as read-only prompt
+            addRow(label, true);
+            QString value = (!defs.empty())
+                                ? QString::fromStdString(defs.at(0))
+                                : "";
+            fieldEdits_.at(0)->setText(value);
+        }
+        else
+        {
+            // Remaining fields are the user's answer inputs
+            addRow(label, false);
+            fieldEdits_.at(i)->setPlaceholderText("Your answer…");
+        }
+    }
+}
+
 void CardWidget::onActionButton()
 {
     if ( mode_ == CardMode::AddMode )
@@ -175,6 +216,61 @@ void CardWidget::onActionButton()
                 actionBtn_->setEnabled(false);
             }
         }
+    else if ( mode_ == CardMode::StudyMode )
+        {
+            if ( !currentCard_ || fieldNames_.empty() )
+            {
+                return;
+            }
+
+            // First field is the prompt; collect answers from the rest
+            Fields answerFields(fieldNames_.begin() + 1, fieldNames_.end());
+            Fields answers;
+            for ( int i = 1 ; i < fieldEdits_.size() ; ++i )
+            {
+                answers.push_back(fieldEdits_.at(i)->text()
+                                      .trimmed()
+                                      .toStdString());
+            }
+
+            double score = currentCard_->check_answers(answerFields, answers);
+            int pct = static_cast<int>(score * 100.0);
+
+            QString msg = QString("Score: %1%").arg(pct);
+            if ( pct == 100 )
+            {
+                msg += "  ✓ Perfect!";
+                resultLabel_->setStyleSheet("color: green; font-weight: bold;");
+            }
+            else if ( pct >= 50 )
+            {
+                resultLabel_->setStyleSheet("color: orange; font-weight: bold;");
+            }
+            else
+            {
+                resultLabel_->setStyleSheet("color: red; font-weight: bold;");
+            }
+
+            // Show correct answers after checking
+            Fields defs;
+            currentCard_->get_definitions(fieldNames_, defs);
+            QString details = "";
+            for ( int i = 1 ; i < static_cast<int>(fieldNames_.size()) ; ++i )
+            {
+                QString field = QString::fromStdString(
+                    fieldNames_.at(static_cast<Fields::size_type>(i)));
+                QString correct = (i < static_cast<int>(defs.size()))
+                                      ? QString::fromStdString(
+                                            defs.at(
+                                                static_cast<Fields::size_type>(i)))
+                                      : "?";
+                details += QString("\n%1: %2").arg(field, correct);
+            }
+
+            resultLabel_->setText(msg + "\nCorrect answers:" + details);
+            resultLabel_->show();
+        }
+    }
 }
 
 void CardWidget::clearRows()

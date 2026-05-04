@@ -54,6 +54,8 @@ public:
 
     void setupForFlip(std::shared_ptr<Card> card, const Fields& fields);
 
+    void setupForStudy(std::shared_ptr<Card> card, const Fields& fields);
+
 signals:
     void cardSubmitted(const Fields& fieldNames,
                        const Fields& definitions);
